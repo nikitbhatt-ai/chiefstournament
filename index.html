@@ -359,7 +359,7 @@
   // While this is blank, sign-ups are only kept in the current browser
   // (fine for testing) and will NOT reach you across devices.
   // ===================================================================
-  const SHEET_ENDPOINT = "";
+  const SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycby2yGKq5bPkPD2iWFM0xnY6F-lLoJxpvPOnHLAUU29vUk5G0qMsSxCFznCqmrCq0KQ6/exec";
 
   // Send one sign-up to the Google Sheet. 'no-cors' lets a plain static page
   // post to Apps Script without extra server setup (we just can't read the
@@ -408,12 +408,10 @@
     const email=document.getElementById('r_email').value.trim();
     if(!name){ show('r_msg',false,"Please add the captain's name."); return; }
     if(!validEmail(email)){ show('r_msg',false,"Please add a valid email so we can confirm your spot."); return; }
-    const btn=document.getElementById('r_btn'); btn.disabled=true;
     const rec={type:'reg',team:document.getElementById('r_team').value.trim()||'(no team name)',name,email,phone:document.getElementById('r_phone').value.trim(),players:document.getElementById('r_players').value,affil:document.getElementById('r_affil').value.trim(),notes:document.getElementById('r_notes').value.trim(),ts:new Date().toISOString()};
-    const sent=await postToSheet(rec);
+    postToSheet(rec);
     const saved=saveRecord('golf:reg:',rec);
-    btn.disabled=false;
-    if(sent||saved){ show('r_msg',true,"You're in! We'll email your captain with cart and check-in details."); ['r_team','r_name','r_email','r_phone','r_affil','r_notes'].forEach(i=>document.getElementById(i).value=''); refreshOrg(); }
+    if(saved||SHEET_ENDPOINT){ show('r_msg',true,"You're in! We'll email your captain with cart and check-in details."); ['r_team','r_name','r_email','r_phone','r_affil','r_notes'].forEach(i=>document.getElementById(i).value=''); refreshOrg(); }
     else { show('r_msg',false,"Something went wrong saving that. Please try again, or email Marcus@chiefspursuitsurplus.com."); }
   }
   async function submitRsvp(){
@@ -422,12 +420,10 @@
     const email=document.getElementById('l_email').value.trim();
     if(!name){ show('l_msg',false,"Please add your name."); return; }
     if(!validEmail(email)){ show('l_msg',false,"Please add a valid email."); return; }
-    const btn=document.getElementById('l_btn'); btn.disabled=true;
     const rec={type:'rsvp',name,email,count:document.getElementById('l_count').value,golf:document.getElementById('l_golf').value,diet:document.getElementById('l_diet').value.trim(),ts:new Date().toISOString()};
-    const sent=await postToSheet(rec);
+    postToSheet(rec);
     const saved=saveRecord('golf:rsvp:',rec);
-    btn.disabled=false;
-    if(sent||saved){ show('l_msg',true,"See you at lunch! RSVP confirmed."); ['l_name','l_email','l_diet'].forEach(i=>document.getElementById(i).value=''); refreshOrg(); }
+    if(saved||SHEET_ENDPOINT){ show('l_msg',true,"See you at lunch! RSVP confirmed."); ['l_name','l_email','l_diet'].forEach(i=>document.getElementById(i).value=''); refreshOrg(); }
     else { show('l_msg',false,"Couldn't save your RSVP. Please try again, or email Marcus@chiefspursuitsurplus.com."); }
   }
 
