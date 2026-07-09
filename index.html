@@ -247,7 +247,7 @@
 
     <div class="org-toggle"><button onclick="toggleOrg()">Organizer view — see sign-ups ▾</button></div>
     <div id="orgPanel">
-      <p id="orgSource" style="font-size:.85rem;opacity:.75;margin:0 0 18px">Showing sign-ups saved in this browser only. Connect your Google Sheet (see README) to see everyone from any device.</p>
+      <p id="orgSource" style="font-size:.85rem;opacity:.75;margin:0 0 18px">Showing sign-ups saved in this browser only. Connect your Google Sheet (see README) so every sign-up is recorded for you.</p>
       <div class="org-stats">
         <div class="org-stat"><b id="s_teams">0</b><span>Teams</span></div>
         <div class="org-stat"><b id="s_golfers">0</b><span>Golfers</span></div>
@@ -361,12 +361,6 @@
   // ===================================================================
   const SHEET_ENDPOINT = "";
 
-  // EDIT: A secret phrase of your choosing. It lets the "Organizer view"
-  // on this page pull the FULL sign-up list back from your Google Sheet.
-  // It must exactly match the ORG_KEY in google-sheet-connector.gs.
-  // Leave blank until you've set up the sheet.
-  const ORG_KEY = "";
-
   // Send one sign-up to the Google Sheet. 'no-cors' lets a plain static page
   // post to Apps Script without extra server setup (we just can't read the
   // reply back, so we treat a completed request as success).
@@ -451,27 +445,10 @@
   function toggleOrg(){ orgOpen=!orgOpen; document.getElementById('orgPanel').classList.toggle('show',orgOpen); if(orgOpen) refreshOrg(); }
   let cacheReg=[], cacheRsvp=[];
 
-  // Pull the complete list back from the Google Sheet (needs SHEET_ENDPOINT +
-  // ORG_KEY). Returns null if not configured or unreachable.
-  async function syncFromSheet(){
-    if(!SHEET_ENDPOINT || !ORG_KEY) return null;
-    try{
-      const url=SHEET_ENDPOINT+(SHEET_ENDPOINT.indexOf('?')>-1?'&':'?')+'key='+encodeURIComponent(ORG_KEY);
-      const res=await fetch(url);
-      const data=await res.json();
-      if(!data || !data.ok) return null;
-      const reg=(data.registrations||[]).map(r=>({team:r.Team,name:r.Captain,email:r.Email,phone:r.Phone,players:r.Players,affil:r.Affiliation,notes:r.Notes,ts:r.Time}));
-      const rsvp=(data.rsvps||[]).map(r=>({name:r.Name,email:r.Email,count:r.Attending,golf:r.Golfing,diet:r['Dietary notes'],ts:r.Time}));
-      return {reg,rsvp};
-    }catch(e){ console.error('sheet sync failed', e); return null; }
-  }
-
-  async function refreshOrg(){
+  function refreshOrg(){
     cacheReg=listRecords('golf:reg:'); cacheRsvp=listRecords('golf:rsvp:');
     const src=document.getElementById('orgSource');
-    const synced=await syncFromSheet();
-    if(synced){ cacheReg=synced.reg; cacheRsvp=synced.rsvp; if(src) src.textContent='Showing every sign-up from your Google Sheet.'; }
-    else if(src){ src.textContent = (SHEET_ENDPOINT ? 'Could not reach the Google Sheet — showing sign-ups saved on this device. Check SHEET_ENDPOINT / ORG_KEY.' : 'Showing sign-ups saved in this browser only. Connect your Google Sheet (see README) to see everyone from any device.'); }
+    if(src){ src.textContent = (SHEET_ENDPOINT ? 'Quick glance at sign-ups saved on this device. Your Google Sheet holds the complete list from everyone.' : 'Showing sign-ups saved in this browser only. Connect your Google Sheet (see README) so every sign-up is recorded for you.'); }
     const golfers=cacheReg.reduce((s,r)=>s+(parseInt(r.players)||0),0);
     const guests=cacheRsvp.reduce((s,r)=>s+(parseInt(r.count)||1),0);
     document.getElementById('s_teams').textContent=cacheReg.length;

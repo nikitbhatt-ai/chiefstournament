@@ -6,7 +6,7 @@ A single, self-contained web page (`index.html`) that lets people:
 - **RSVP for lunch** afterward
 - **Sign up as a sponsor** (the sponsor tier buttons pre-fill the registration form)
 
-There's also a built-in **Organizer view** (a link under the sign-up forms) that shows live totals, a table of everyone who has signed up, and a **Download CSV** button.
+There's also a built-in **Organizer view** (a link under the sign-up forms) that gives a quick on-device glance at sign-ups with live totals and a **Download CSV** button. Your Google Sheet is the complete, authoritative list.
 
 Payment stays offline — the site tells people to pay by check or wire, exactly as before.
 
@@ -20,7 +20,6 @@ Until you connect the sheet, sign-ups are only saved in the visitor's own browse
 
 ```
 Visitor fills the form  ─▶  Google Apps Script  ─▶  your Google Sheet
-                                                     (Organizer view reads it back)
 ```
 
 ---
@@ -31,16 +30,14 @@ Full click-by-click instructions live at the top of **`google-sheet-connector.gs
 
 1. Create a blank Google Sheet.
 2. In the sheet, open **Extensions → Apps Script**, paste in the contents of `google-sheet-connector.gs`, and save.
-3. Set `ORG_KEY` in that script to a secret phrase of your choosing.
-4. **Deploy → New deployment → Web app**, *Execute as: Me*, *Who has access: **Anyone***, and copy the resulting URL (ends in `/exec`).
-5. Open `index.html`, search for `SHEET_ENDPOINT`, and fill in the two lines:
+3. **Deploy → New deployment → Web app**, *Execute as: Me*, *Who has access: **Anyone***, and copy the resulting URL (ends in `/exec`).
+4. Open `index.html`, search for `SHEET_ENDPOINT`, and paste the URL between the quotes:
 
    ```js
    const SHEET_ENDPOINT = "https://script.google.com/macros/s/.../exec";
-   const ORG_KEY        = "the-same-secret-phrase";
    ```
 
-That's it — sign-ups now flow into your spreadsheet, and the Organizer view can pull the full list back from any device.
+That's it — every sign-up now writes a row into your spreadsheet in real time (a **Registrations** tab and an **RSVPs** tab, created automatically).
 
 ---
 
@@ -96,7 +93,7 @@ Upload `index.html` to your web host, Squarespace, Wix, etc. If your host expect
 ## Good to know
 
 - **Spam protection:** the forms include a hidden "honeypot" field that silently blocks most bots.
-- **Privacy:** the full attendee list can only be read with your secret `ORG_KEY`, so it isn't exposed publicly.
+- **Privacy:** sign-up data lives in your own Google Sheet — the website never shows one visitor's entry to another.
 - **Backup copy:** each visitor's browser also keeps a local copy of what *they* submitted, as a safety net — but your Google Sheet is the single complete record.
 
 Questions about the event: Marcus Shaw · Marcus@chiefspursuitsurplus.com · (979) 571-1710
