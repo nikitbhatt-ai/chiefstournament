@@ -95,6 +95,8 @@
   .field input,.field select,.field textarea{width:100%;padding:12px 13px;font-family:inherit;font-size:1rem;border:1.5px solid var(--line);border-radius:2px;background:#fff;color:var(--ink)}
   .formcard.rsvp .field input,.formcard.rsvp .field select,.formcard.rsvp .field textarea{background:rgba(255,255,255,.95)}
   .field textarea{min-height:70px;resize:vertical}
+  .field .check{display:flex;align-items:flex-start;gap:10px;font-family:"Public Sans",system-ui,sans-serif;text-transform:none;letter-spacing:0;font-size:.95rem;font-weight:500;margin:0;cursor:pointer}
+  .field .check input[type=checkbox]{width:18px;height:18px;flex:0 0 auto;margin:2px 0 0}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .msg{margin-top:12px;padding:12px 14px;border-radius:2px;font-size:.95rem;display:none}
   .msg.ok{display:block;background:var(--coyote);color:var(--ink)}
@@ -224,6 +226,7 @@
           <div class="field"><label for="r_players">Number of players</label><select id="r_players"><option>1</option><option>2</option><option>3</option><option selected>4</option></select></div>
           <div class="field"><label for="r_affil">Affiliation (optional)</label><input id="r_affil" type="text" placeholder="Dept / agency / business"></div>
         </div>
+        <div class="field"><label class="check" for="r_public_safety"><input type="checkbox" id="r_public_safety"><span>I'm a public safety professional (police, fire, EMS) claiming a <b>free entry</b> — limited slots.</span></label></div>
         <div class="field"><label for="r_notes">Notes (optional)</label><textarea id="r_notes" placeholder="Player names, sponsor package, etc."></textarea></div>
         <div class="field" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"><label for="r_hp">Leave this field empty</label><input id="r_hp" type="text" tabindex="-1" autocomplete="off"></div>
         <button id="r_btn" class="btn btn-green" onclick="submitReg()">Submit Registration</button>
@@ -254,7 +257,7 @@
         <div class="org-stat"><b id="s_rsvp">0</b><span>Lunch guests</span></div>
       </div>
       <h3 style="font-size:1.1rem;margin-bottom:8px">Registrations</h3>
-      <table><thead><tr><th>Team</th><th>Captain</th><th>Players</th><th>Email</th></tr></thead><tbody id="regBody"></tbody></table>
+      <table><thead><tr><th>Team</th><th>Captain</th><th>Players</th><th>Public Safety</th><th>Email</th></tr></thead><tbody id="regBody"></tbody></table>
       <h3 style="font-size:1.1rem;margin-bottom:8px">Lunch RSVPs</h3>
       <table><thead><tr><th>Name</th><th>Attending</th><th>Golfing?</th><th>Email</th></tr></thead><tbody id="rsvpBody"></tbody></table>
       <button class="btn btn-green" onclick="exportCsv()" style="margin-top:4px">Download all sign-ups (CSV)</button>
@@ -407,10 +410,10 @@
     const email=document.getElementById('r_email').value.trim();
     if(!name){ show('r_msg',false,"Please add the captain's name."); return; }
     if(!validEmail(email)){ show('r_msg',false,"Please add a valid email so we can confirm your spot."); return; }
-    const rec={type:'reg',team:document.getElementById('r_team').value.trim()||'(no team name)',name,email,phone:document.getElementById('r_phone').value.trim(),players:document.getElementById('r_players').value,affil:document.getElementById('r_affil').value.trim(),notes:document.getElementById('r_notes').value.trim(),ts:new Date().toISOString()};
+    const rec={type:'reg',team:document.getElementById('r_team').value.trim()||'(no team name)',name,email,phone:document.getElementById('r_phone').value.trim(),players:document.getElementById('r_players').value,affil:document.getElementById('r_affil').value.trim(),notes:document.getElementById('r_notes').value.trim(),publicSafety:document.getElementById('r_public_safety').checked?'Yes':'No',ts:new Date().toISOString()};
     postToSheet(rec);
     const saved=saveRecord('golf:reg:',rec);
-    if(saved||SHEET_ENDPOINT){ show('r_msg',true,"You're in! We'll email your captain with cart and check-in details."); ['r_team','r_name','r_email','r_phone','r_affil','r_notes'].forEach(i=>document.getElementById(i).value=''); refreshOrg(); }
+    if(saved||SHEET_ENDPOINT){ show('r_msg',true,"You're in! We'll email your captain with cart and check-in details."); ['r_team','r_name','r_email','r_phone','r_affil','r_notes'].forEach(i=>document.getElementById(i).value=''); document.getElementById('r_public_safety').checked=false; refreshOrg(); }
     else { show('r_msg',false,"Something went wrong saving that. Please try again, or email Marcus@chiefspursuitsurplus.com."); }
   }
   async function submitRsvp(){
@@ -449,14 +452,14 @@
     document.getElementById('s_teams').textContent=cacheReg.length;
     document.getElementById('s_golfers').textContent=golfers;
     document.getElementById('s_rsvp').textContent=guests;
-    document.getElementById('regBody').innerHTML=cacheReg.map(r=>`<tr><td>${esc(r.team)}</td><td>${esc(r.name)}</td><td>${esc(r.players)}</td><td>${esc(r.email)}</td></tr>`).join('')||'<tr><td colspan=4>No registrations yet.</td></tr>';
+    document.getElementById('regBody').innerHTML=cacheReg.map(r=>`<tr><td>${esc(r.team)}</td><td>${esc(r.name)}</td><td>${esc(r.players)}</td><td>${esc(r.publicSafety||'—')}</td><td>${esc(r.email)}</td></tr>`).join('')||'<tr><td colspan=5>No registrations yet.</td></tr>';
     document.getElementById('rsvpBody').innerHTML=cacheRsvp.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.count)}</td><td>${esc(r.golf)}</td><td>${esc(r.email)}</td></tr>`).join('')||'<tr><td colspan=4>No RSVPs yet.</td></tr>';
   }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function exportCsv(){
-    let rows=[['Type','Team','Name','Email','Phone','Players/Count','Golfing','Affiliation','Diet','Notes','Time']];
-    cacheReg.forEach(r=>rows.push(['Registration',r.team,r.name,r.email,r.phone,r.players,'',r.affil,'',r.notes,r.ts]));
-    cacheRsvp.forEach(r=>rows.push(['Lunch RSVP','',r.name,r.email,'',r.count,r.golf,'',r.diet,'',r.ts]));
+    let rows=[['Type','Team','Name','Email','Phone','Players/Count','Golfing','Affiliation','Public Safety','Diet','Notes','Time']];
+    cacheReg.forEach(r=>rows.push(['Registration',r.team,r.name,r.email,r.phone,r.players,'',r.affil,r.publicSafety||'','',r.notes,r.ts]));
+    cacheRsvp.forEach(r=>rows.push(['Lunch RSVP','',r.name,r.email,'',r.count,r.golf,'','',r.diet,'',r.ts]));
     const csv=rows.map(r=>r.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(',')).join('\n');
     const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='golf-signups.csv'; a.click();
   }

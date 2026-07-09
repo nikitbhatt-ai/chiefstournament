@@ -61,19 +61,22 @@ function doPost(e) {
     if (sheet.getLastRow() === 0) {
       if (isReg) {
         sheet.appendRow(['Time', 'Team', 'Captain', 'Email', 'Phone',
-                         'Players', 'Affiliation', 'Notes']);
+                         'Players', 'Affiliation', 'Notes', 'Public Safety (free entry)']);
       } else {
         sheet.appendRow(['Time', 'Name', 'Email', 'Attending',
                          'Golfing?', 'Dietary notes']);
       }
       sheet.getRange(1, 1, 1, sheet.getLastColumn())
            .setFontWeight('bold');
+    } else if (isReg && !sheet.getRange(1, 9).getValue()) {
+      // Add the Public Safety header to a Registrations tab created before this column existed.
+      sheet.getRange(1, 9).setValue('Public Safety (free entry)').setFontWeight('bold');
     }
 
     // Append the new sign-up.
     if (isReg) {
       sheet.appendRow([new Date(), data.team, data.name, data.email,
-                       data.phone, data.players, data.affil, data.notes]);
+                       data.phone, data.players, data.affil, data.notes, data.publicSafety]);
     } else {
       sheet.appendRow([new Date(), data.name, data.email, data.count,
                        data.golf, data.diet]);
